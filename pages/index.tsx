@@ -30,7 +30,7 @@ Chart.register(
 
 const dimensions = {
   width: 800,
-  height: 400,
+  height: 200,
   devicePixelRatioServer: 2,
 };
 
@@ -40,30 +40,19 @@ export async function getServerSideProps() {
     dimensions.height,
     dimensions.devicePixelRatioServer
   );
-  await fs.writeFile("chart-example.png", chartExample);
+  await fs.writeFile("public/chart-example.png", chartExample);
 
   const chartStockStory = await getChartStockStoryPng(
     dimensions.width,
     dimensions.height,
     dimensions.devicePixelRatioServer
   );
-  await fs.writeFile("chart-stocks.png", chartStockStory);
+  await fs.writeFile("public/chart-stocks.png", chartStockStory);
 
-  return {
-    props: {
-      chartExample: chartExample.toString("base64"),
-      chartStockStory: chartStockStory.toString("base64"),
-    },
-  };
+  return {props: {}}
 }
 
-const Page = ({
-  chartExample,
-  chartStockStory,
-}: {
-  chartExample: string;
-  chartStockStory: string;
-}) => {
+const Page = () => {
   return (
     <div
       style={{
@@ -76,7 +65,7 @@ const Page = ({
 
       <h1>Stocks server side</h1>
       <img
-        src={"data:image/png;base64," + chartStockStory}
+        src="chart-stocks.png"
         width={dimensions.width}
         height={dimensions.height}
         alt="Server side rendered chart"
@@ -87,7 +76,7 @@ const Page = ({
 
       <h1>Chart server side</h1>
       <img
-        src={"data:image/png;base64," + chartExample}
+        src="chart-example.png"
         width={dimensions.width}
         height={dimensions.height}
         alt="Server side rendered chart"
