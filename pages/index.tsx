@@ -14,7 +14,7 @@ import {
   Legend,
 } from "chart.js";
 import { ChartExample, getChartExamplePng } from "./chart-example";
-import { ChartStockStory, getChartStockStoryPng } from "./chart-stockstory";
+import { ChartStocks, getChartStockStoryPng } from "./chart-stocks";
 
 Chart.register(
   CategoryScale,
@@ -25,26 +25,29 @@ Chart.register(
   PointElement,
   TimeSeriesScale,
   Title,
-  Tooltip,
+  Tooltip
 );
 
 const dimensions = {
   width: 800,
   height: 400,
+  devicePixelRatioServer: 2,
 };
 
 export async function getServerSideProps() {
   const chartExample = await getChartExamplePng(
     dimensions.width,
-    dimensions.height
+    dimensions.height,
+    dimensions.devicePixelRatioServer
   );
   await fs.writeFile("chart-example.png", chartExample);
 
   const chartStockStory = await getChartStockStoryPng(
     dimensions.width,
-    dimensions.height
+    dimensions.height,
+    dimensions.devicePixelRatioServer
   );
-  await fs.writeFile("chart-stonks.png", chartStockStory);
+  await fs.writeFile("chart-stocks.png", chartStockStory);
 
   return {
     props: {
@@ -68,10 +71,10 @@ const Page = ({
         margin: "50px auto",
       }}
     >
-      <h1>StonkStory client side</h1>
-      <ChartStockStory width={dimensions.width} height={dimensions.height} />
+      <h1>Stocks client side</h1>
+      <ChartStocks width={dimensions.width} height={dimensions.height} />
 
-      <h1>StonkStory server side</h1>
+      <h1>Stocks server side</h1>
       <img
         src={"data:image/png;base64," + chartStockStory}
         width={dimensions.width}

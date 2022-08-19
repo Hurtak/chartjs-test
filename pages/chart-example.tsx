@@ -73,7 +73,8 @@ export const ChartExample = ({
 
 export const getChartExamplePng = async (
   width: number,
-  height: number
+  height: number,
+  devicePixelRatio: number
 ): Promise<Buffer> => {
   console.time("chart example render");
   const chartJSNodeCanvas = new ChartJSNodeCanvas({
@@ -84,7 +85,7 @@ export const getChartExamplePng = async (
   const buffer = await chartJSNodeCanvas.renderToBuffer({
     type: "line",
     data: chartData.data,
-    options: chartData.options,
+    options: { ...chartData.options, devicePixelRatio },
   });
   console.timeEnd("chart example render");
 

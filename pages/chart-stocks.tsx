@@ -1,115 +1,8 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
-import { ScriptableContext } from "chart.js";
 import "chartjs-adapter-date-fns";
 
-import { array as A, option as O } from "fp-ts";
-import { pipe } from "fp-ts/function";
-import * as DF from "date-fns/fp";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
-
-enum StockPricePeriodEnum {
-  OneDay = "1-day",
-  OneWeek = "1-week",
-  ThreeMonths = "3-months",
-  OneYear = "1-year",
-  FiveYears = "5-years",
-  All = "all",
-}
-
-type MarketOpenClose = { marketOpenDate: Date; marketCloseDate: Date };
-
-const COLOR_GRAY = "rgba(128,128,128,1)";
-const COLOR_GREEN = "rgba(105, 209, 164, 1)";
-const COLOR_GREEN_TRANSPARENT = "rgba(105, 209, 164, 0.2)";
-const COLOR_TRANSPARENT = "transparent";
-
-const colorGradient =
-  (
-    period: StockPricePeriodEnum,
-    marketOpenClose: O.Option<MarketOpenClose>,
-    outOfMarketHoursColor: string,
-    marketHoursColor: string
-  ) =>
-  (context: ScriptableContext<"line">) => {
-    const { ctx, chartArea, scales } = context.chart;
-
-    if (!chartArea) {
-      return COLOR_GRAY;
-    }
-
-    if (period === StockPricePeriodEnum.OneDay) {
-      const bcGradient = ctx.createLinearGradient(
-        chartArea.left,
-        0,
-        chartArea.right,
-        0
-      );
-      const scaleBounds = scales.x.getUserBounds();
-
-      pipe(
-        marketOpenClose,
-        O.map(({ marketOpenDate, marketCloseDate }) => {
-          if (DF.isAfter(scaleBounds.min)(marketOpenDate)) {
-            const marketOpenPercentage =
-              (scales.x.getPixelForValue(marketOpenDate.getTime()) -
-                chartArea.left) /
-              chartArea.width;
-            bcGradient.addColorStop(0, outOfMarketHoursColor);
-            bcGradient.addColorStop(
-              Math.max(
-                0,
-                isNaN(marketOpenPercentage) ? 0 : marketOpenPercentage
-              ),
-              outOfMarketHoursColor
-            );
-            bcGradient.addColorStop(
-              Math.max(
-                0,
-                isNaN(marketOpenPercentage) ? 0 : marketOpenPercentage
-              ),
-              marketHoursColor
-            );
-          } else {
-            bcGradient.addColorStop(0, marketHoursColor);
-          }
-
-          if (DF.isBefore(scaleBounds.max)(marketCloseDate)) {
-            const marketClosePercentage =
-              (scales.x.getPixelForValue(marketCloseDate.getTime()) -
-                chartArea.left) /
-              chartArea.width;
-            bcGradient.addColorStop(
-              Math.min(
-                1,
-                isNaN(marketClosePercentage) ? 1 : marketClosePercentage
-              ),
-              marketHoursColor
-            );
-            bcGradient.addColorStop(
-              Math.min(
-                1,
-                isNaN(marketClosePercentage) ? 1 : marketClosePercentage
-              ),
-              outOfMarketHoursColor
-            );
-            bcGradient.addColorStop(1, outOfMarketHoursColor);
-          } else {
-            bcGradient.addColorStop(1, marketHoursColor);
-          }
-        }),
-        O.getOrElse(() => {
-          bcGradient.addColorStop(0, outOfMarketHoursColor);
-          bcGradient.addColorStop(1, outOfMarketHoursColor);
-        })
-      );
-
-      return bcGradient;
-    } else {
-      // market hours or multiple days display
-      return marketHoursColor;
-    }
-  };
 
 const chartDataSet = [
   { aggregateStart: "2022-05-23T00:00", mid: 149.215 },
@@ -187,13 +80,8 @@ const data = {
       label: "First dataset",
       data: chartDataSet.map((_) => _.mid),
       fill: true,
-      borderColor: COLOR_GREEN,
-      backgroundColor: colorGradient(
-        StockPricePeriodEnum.ThreeMonths,
-        O.none,
-        COLOR_TRANSPARENT,
-        COLOR_GREEN_TRANSPARENT
-      ),
+      borderColor: "rgba(105, 209, 164, 1)",
+      backgroundColor: "rgba(105, 209, 164, 0.2)",
       pointRadius: 0,
     },
   ],
@@ -207,7 +95,7 @@ const options = {
   },
   scales: {
     x: {
-      // type: "timeseries", // TODO
+      type: "timeseries",
       display: true,
       ticks: {
         autoSkip: true,
@@ -242,7 +130,7 @@ const chartData = {
   data,
 };
 
-export const ChartStockStory: React.FC<{
+export const ChartStocks: React.FC<{
   width: number;
   height: number;
 }> = ({ width, height }) => {
@@ -255,21 +143,25 @@ export const ChartStockStory: React.FC<{
 
 export const getChartStockStoryPng = async (
   width: number,
-  height: number
+  height: number,
+  devicePixelRatio: number
 ): Promise<Buffer> => {
-  console.time("chart stonks render");
+  console.time("chart stocks render");
 
   const chartJSNodeCanvas = new ChartJSNodeCanvas({
     width: width,
     height: height,
     backgroundColour: "white", // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
+    plugins: {
+      modern: ["chartjs-adapter-date-fns"],
+    },
   });
   const buffer = await chartJSNodeCanvas.renderToBuffer({
     type: "line",
     data: chartData.data,
-    options: chartData.options,
+    options: { ...chartData.options, devicePixelRatio },
   });
-  console.timeEnd("chart stonks render");
+  console.timeEnd("chart stocks render");
 
   return buffer;
 };
