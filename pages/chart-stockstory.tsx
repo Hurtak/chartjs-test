@@ -1,11 +1,12 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
-import { ScriptableContext, TooltipItem } from "chart.js";
+import { ScriptableContext } from "chart.js";
+import "chartjs-adapter-date-fns";
+
 import { array as A, option as O } from "fp-ts";
 import { pipe } from "fp-ts/function";
 import * as DF from "date-fns/fp";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
-import "chartjs-adapter-date-fns";
 
 enum StockPricePeriodEnum {
   OneDay = "1-day",
@@ -17,22 +18,6 @@ enum StockPricePeriodEnum {
 }
 
 type MarketOpenClose = { marketOpenDate: Date; marketCloseDate: Date };
-
-const isGoingUp = (context: TooltipItem<"line">): boolean =>
-  // We can't tell previous item for beginning of the chart, let's assume upwards trend
-  context.dataIndex === 0 ||
-  // Check upward trend
-  (context.dataset.data.length > 0 &&
-    typeof context.dataset.data[0] === "number" &&
-    pipe(
-      A.lookup(context.dataIndex - 1)(context.dataset.data as number[]),
-      O.bindTo("previous"),
-      O.bind("current", () =>
-        A.lookup(context.dataIndex)(context.dataset.data as number[])
-      ),
-      O.map(({ previous, current }) => previous <= current),
-      O.getOrElse(() => false as boolean)
-    ));
 
 const COLOR_GRAY = "rgba(128,128,128,1)";
 const COLOR_GREEN = "rgba(105, 209, 164, 1)";
@@ -202,12 +187,7 @@ const data = {
       label: "First dataset",
       data: chartDataSet.map((_) => _.mid),
       fill: true,
-      borderColor: colorGradient(
-        StockPricePeriodEnum.ThreeMonths,
-        O.none,
-        COLOR_GRAY,
-        COLOR_GREEN
-      ),
+      borderColor: COLOR_GREEN,
       backgroundColor: colorGradient(
         StockPricePeriodEnum.ThreeMonths,
         O.none,
@@ -225,29 +205,9 @@ const options = {
   interaction: {
     mode: "index",
   },
-  plugins: {
-    tooltip: {
-      displayColors: false,
-      enabled: true,
-      intersect: false,
-      yAlign: "bottom",
-      xAlign: "right",
-      boxPadding: 10,
-      callbacks: {
-        label: (ctx) => {
-          const currencyString = currencyFormatter.format(
-            Number.parseFloat(ctx.formattedValue)
-          );
-          const arrowString = isGoingUp(ctx) ? "↗" : "↘";
-          return `${currencyString} ${arrowString}`;
-        },
-        labelTextColor: (ctx) => (isGoingUp(ctx) ? "lightgreen" : "coral"),
-      },
-    },
-  },
   scales: {
     x: {
-      type: "timeseries",
+      // type: "timeseries", // TODO
       display: true,
       ticks: {
         autoSkip: true,

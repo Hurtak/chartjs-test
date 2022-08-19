@@ -76,7 +76,6 @@ export const getChartExamplePng = async (
   height: number
 ): Promise<Buffer> => {
   console.time("chart example render");
-
   const chartJSNodeCanvas = new ChartJSNodeCanvas({
     width: width,
     height: height,

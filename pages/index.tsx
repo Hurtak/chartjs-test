@@ -8,13 +8,13 @@ import {
   PointElement,
   LineElement,
   Title,
-  Tooltip,
-  Legend,
   Filler,
   TimeSeriesScale,
+  Tooltip,
+  Legend,
 } from "chart.js";
-// import { ChartStockStory, getChartStockStoryPng } from "./chart-stockstory";
 import { ChartExample, getChartExamplePng } from "./chart-example";
+import { ChartStockStory, getChartStockStoryPng } from "./chart-stockstory";
 
 Chart.register(
   CategoryScale,
@@ -25,7 +25,7 @@ Chart.register(
   PointElement,
   TimeSeriesScale,
   Title,
-  Tooltip
+  Tooltip,
 );
 
 const dimensions = {
@@ -40,16 +40,16 @@ export async function getServerSideProps() {
   );
   await fs.writeFile("chart-example.png", chartExample);
 
-  // const chartStockStory = await getChartStockStoryPng(
-  //   dimensions.width,
-  //   dimensions.height
-  // );
-  // await fs.writeFile("chart-stonks.png", chartStockStory);
+  const chartStockStory = await getChartStockStoryPng(
+    dimensions.width,
+    dimensions.height
+  );
+  await fs.writeFile("chart-stonks.png", chartStockStory);
 
   return {
     props: {
       chartExample: chartExample.toString("base64"),
-      chartStockStory: '',
+      chartStockStory: chartStockStory.toString("base64"),
     },
   };
 }
@@ -69,15 +69,16 @@ const Page = ({
       }}
     >
       <h1>StonkStory client side</h1>
-      {/* <ChartStockStory width={dimensions.width} height={dimensions.height} /> */}
+      <ChartStockStory width={dimensions.width} height={dimensions.height} />
 
-      <h1>StonkStory client side</h1>
+      <h1>StonkStory server side</h1>
       <img
         src={"data:image/png;base64," + chartStockStory}
         width={dimensions.width}
         height={dimensions.height}
         alt="Server side rendered chart"
       />
+
       <h1>Chart client side</h1>
       <ChartExample width={dimensions.width} height={dimensions.height} />
 
