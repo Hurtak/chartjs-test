@@ -10,18 +10,22 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
+  TimeSeriesScale,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
-import { ChartJSNodeCanvas } from "chartjs-node-canvas";
+// import { ChartStockStory, getChartStockStoryPng } from "./chart-stockstory";
+import { ChartExample, getChartExamplePng } from "./chart-example";
 
 Chart.register(
   CategoryScale,
+  Filler,
+  Legend,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
+  TimeSeriesScale,
   Title,
-  Tooltip,
-  Legend
+  Tooltip
 );
 
 const dimensions = {
@@ -29,102 +33,57 @@ const dimensions = {
   height: 400,
 };
 
-const options = {
-  responsive: false,
-  plugins: {
-    legend: {
-      position: "top" as const,
-    },
-    title: {
-      display: true,
-      text: "Chart.js Line Chart",
-    },
-  },
-};
-
-const labels = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const getRandomInt = (max: number) => Math.floor(Math.random() * max);
-
-const data = {
-  labels,
-  datasets: [
-    {
-      label: "Dataset 1",
-      data: [681, 64, 257, 987, 563, 515, 908, 348, 551, 146, 485, 109],
-      borderColor: "rgb(255, 99, 132)",
-      backgroundColor: "rgba(255, 99, 132, 0.5)",
-    },
-    {
-      label: "Dataset 2",
-      data: [
-        4529, 454, 2445, 1345, 1843, 4027, 294, 1207, 319, 964, 4829, 2194,
-      ],
-      borderColor: "rgb(53, 162, 235)",
-      backgroundColor: "rgba(53, 162, 235, 0.5)",
-    },
-  ],
-};
-
 export async function getServerSideProps() {
-  console.time("chart");
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({
-    width: dimensions.width,
-    height: dimensions.height,
-    backgroundColour: "white", // Uses https://www.w3schools.com/tags/canvas_fillstyle.asp
-  });
-  const res = await chartJSNodeCanvas.renderToBuffer({
-    type: "line",
-    data,
-    options,
-  });
-  console.timeEnd("chart");
+  const chartExample = await getChartExamplePng(
+    dimensions.width,
+    dimensions.height
+  );
+  await fs.writeFile("chart-example.png", chartExample);
 
-  await fs.writeFile("chart.png", res);
-  const chartBase64 = res.toString("base64");
+  // const chartStockStory = await getChartStockStoryPng(
+  //   dimensions.width,
+  //   dimensions.height
+  // );
+  // await fs.writeFile("chart-stonks.png", chartStockStory);
 
   return {
-    props: { chart: chartBase64 },
+    props: {
+      chartExample: chartExample.toString("base64"),
+      chartStockStory: '',
+    },
   };
 }
 
-const Page = ({ chart }) => {
+const Page = ({
+  chartExample,
+  chartStockStory,
+}: {
+  chartExample: string;
+  chartStockStory: string;
+}) => {
   return (
     <div
       style={{
-        padding: "20px",
+        width: dimensions.width,
+        margin: "50px auto",
       }}
     >
-      <h1>
-        Chart client side &ndash; empty canvas element where client side JS
-        renders chart
-      </h1>
-      <Line
-        options={options}
-        data={data}
+      <h1>StonkStory client side</h1>
+      {/* <ChartStockStory width={dimensions.width} height={dimensions.height} /> */}
+
+      <h1>StonkStory client side</h1>
+      <img
+        src={"data:image/png;base64," + chartStockStory}
         width={dimensions.width}
         height={dimensions.height}
+        alt="Server side rendered chart"
       />
+      <h1>Chart client side</h1>
+      <ChartExample width={dimensions.width} height={dimensions.height} />
 
-      <h1>
-        Chart server side &ndash; chart rendered on server, converted into
-        base64, put into &lt;img /&gt; tag
-      </h1>
+      <h1>Chart server side</h1>
       <img
-        src={"data:image/png;base64," + chart}
+        src={"data:image/png;base64," + chartExample}
         width={dimensions.width}
         height={dimensions.height}
         alt="Server side rendered chart"
